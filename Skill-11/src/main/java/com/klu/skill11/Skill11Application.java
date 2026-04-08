@@ -1,0 +1,11 @@
+package com.klu.skill11;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+@SpringBootApplication
+public class Skill11Application {
+    public static void main(String[] args) {
+        SpringApplication.run(Skill11Application.class, args);
+    }
+}

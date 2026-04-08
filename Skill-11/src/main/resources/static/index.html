@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Skill 11 - React API Integration</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, sans-serif; background: #f4f7fb; color: #222; }
+    .container { max-width: 1100px; margin: auto; padding: 24px; }
+    .header { text-align: center; margin-bottom: 24px; }
+    .header h1 { color: #0d47a1; margin-bottom: 10px; }
+    .nav { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-bottom: 24px; }
+    .nav button { background: #1565c0; color: #fff; border: none; padding: 12px 18px; border-radius: 8px; cursor: pointer; font-size: 15px; }
+    .nav button:hover { background: #0d47a1; }
+    .card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 4px 14px rgba(0,0,0,0.08); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+    .user-card, .post-card { border: 1px solid #e3e8ef; border-radius: 10px; padding: 16px; background: #fafcff; }
+    .title { color: #1565c0; margin-top: 0; }
+    .status { padding: 10px 14px; border-radius: 8px; margin-bottom: 16px; }
+    .loading { background: #fff3cd; color: #856404; }
+    .error { background: #f8d7da; color: #842029; }
+    .controls { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+    select, button.refresh { padding: 10px 12px; border: 1px solid #cfd8dc; border-radius: 8px; font-size: 14px; }
+    button.refresh { background: #2e7d32; color: white; border: none; cursor: pointer; }
+    button.refresh:hover { background: #1b5e20; }
+    .home-box { text-align: center; padding: 30px 10px; }
+    .home-box p { font-size: 17px; line-height: 1.6; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    function Dashboard({ onNavigate }) {
+      return (
+        <div className="card home-box">
+          <h2 className="title">Dashboard / Home</h2>
+          <p>This project demonstrates fetching from local JSON using fetch(), fetching users from JSONPlaceholder using fetch(), and fetching fake API posts using axios with refresh and dropdown filter.</p>
+          <div className="nav">
+            <button onClick={() => onNavigate('local')}>Local Users</button>
+            <button onClick={() => onNavigate('usersApi')}>Users API</button>
+            <button onClick={() => onNavigate('fakePosts')}>Fake API Posts</button>
+          </div>
+        </div>
+      );
+    }
+
+    function LocalUserList({ onNavigate }) {
+      const [users, setUsers] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState('');
+
+      useEffect(() => {
+        fetch('/users.json')
+          .then((res) => {
+            if (!res.ok) throw new Error('Failed to fetch local users');
+            return res.json();
+          })
+          .then((data) => {
+            setUsers(data);
+            setLoading(false);
+          })
+          .catch((err) => {
+            setError(err.message);
+            setLoading(false);
+          });
+      }, []);
+
+      return (
+        <div className="card">
+          <div className="nav" style={{justifyContent:'space-between'}}>
+            <h2 className="title">Local Users</h2>
+            <button onClick={() => onNavigate('home')}>Back to Home</button>
+          </div>
+          {loading && <div className="status loading">Loading local users...</div>}
+          {error && <div className="status error">{error}</div>}
+          <div className="grid">
+            {users.map((user) => (
+              <div className="user-card" key={user.id}>
+                <h3>{user.name}</h3>
+                <p><strong>Email:</strong> {user.email}</p>
+                <p><strong>Phone:</strong> {user.phone}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function UserList({ onNavigate }) {
+      const [users, setUsers] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState('');
+
+      useEffect(() => {
+        fetch('https://jsonplaceholder.typicode.com/users')
+          .then((res) => {
+            if (!res.ok) throw new Error('Failed to fetch users API');
+            return res.json();
+          })
+          .then((data) => {
+            setUsers(data);
+            setLoading(false);
+          })
+          .catch((err) => {
+            setError(err.message);
+            setLoading(false);
+          });
+      }, []);
+
+      return (
+        <div className="card">
+          <div className="nav" style={{justifyContent:'space-between'}}>
+            <h2 className="title">Users API - JSONPlaceholder</h2>
+            <button onClick={() => onNavigate('home')}>Back to Home</button>
+          </div>
+          {loading && <div className="status loading">Loading API users...</div>}
+          {error && <div className="status error">{error}</div>}
+          <div className="grid">
+            {users.map((user) => (
+              <div className="user-card" key={user.id}>
+                <h3>{user.name}</h3>
+                <p><strong>Email:</strong> {user.email}</p>
+                <p><strong>Phone:</strong> {user.phone}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function FakePostList({ onNavigate }) {
+      const [posts, setPosts] = useState([]);
+      const [filteredPosts, setFilteredPosts] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [error, setError] = useState('');
+      const [userFilter, setUserFilter] = useState('all');
+
+      const fetchPosts = () => {
+        setLoading(true);
+        setError('');
+        axios.get('https://dummyjson.com/posts')
+          .then((response) => {
+            const data = response.data.posts || [];
+            setPosts(data);
+            setLoading(false);
+          })
+          .catch((err) => {
+            setError(err.message || 'Failed to fetch posts');
+            setLoading(false);
+          });
+      };
+
+      useEffect(() => {
+        fetchPosts();
+      }, []);
+
+      useEffect(() => {
+        if (userFilter === 'all') {
+          setFilteredPosts(posts);
+        } else {
+          setFilteredPosts(posts.filter((post) => String(post.userId) === userFilter));
+        }
+      }, [posts, userFilter]);
+
+      const userIds = [...new Set(posts.map((post) => post.userId))];
+
+      return (
+        <div className="card">
+          <div className="nav" style={{justifyContent:'space-between'}}>
+            <h2 className="title">Fake API Posts - DummyJSON</h2>
+            <button onClick={() => onNavigate('home')}>Back to Home</button>
+          </div>
+
+          <div className="controls">
+            <select value={userFilter} onChange={(e) => setUserFilter(e.target.value)}>
+              <option value="all">All User IDs</option>
+              {userIds.map((id) => (
+                <option key={id} value={String(id)}>User {id}</option>
+              ))}
+            </select>
+            <button className="refresh" onClick={fetchPosts}>Refresh</button>
+          </div>
+
+          {loading && <div className="status loading">Loading fake API posts...</div>}
+          {error && <div className="status error">{error}</div>}
+
+          <div className="grid">
+            {filteredPosts.map((post) => (
+              <div className="post-card" key={post.id}>
+                <h3>{post.title}</h3>
+                <p>{post.body}</p>
+                <p><strong>User ID:</strong> {post.userId}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
+    function App() {
+      const [page, setPage] = useState('home');
+
+      return (
+        <div className="container">
+          <div className="header">
+            <h1>Skill 11 - React API Integration</h1>
+            <p>Fetch API, Axios, Local JSON, Navigation, Refresh Button, and Dropdown Filter</p>
+          </div>
+
+          {page === 'home' && <Dashboard onNavigate={setPage} />}
+          {page === 'local' && <LocalUserList onNavigate={setPage} />}
+          {page === 'usersApi' && <UserList onNavigate={setPage} />}
+          {page === 'fakePosts' && <FakePostList onNavigate={setPage} />}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
